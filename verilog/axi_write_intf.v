@@ -19,7 +19,6 @@ module AXI_WRITE_INFT(
     // wresp interface
     BID,
     BRESP,
-    BUSER,
     BVALID,
     BREADY,
     // internal interfaces
@@ -32,6 +31,7 @@ module AXI_WRITE_INFT(
     axi_wr_vld,
     axi_wr_data,
     axi_wr_strb,
+    axi_wr_stat
 
 );
     //parameter
@@ -61,7 +61,6 @@ module AXI_WRITE_INFT(
 
     output [AWID_WIDTH-1:0] BID;
     output [1:0] BRESP;
-    output BUSER;
     output BVALID;
     input BREADY;
 
@@ -78,6 +77,7 @@ module AXI_WRITE_INFT(
     output axi_wr_vld;
     output [WDATA_WIDTH-1:0] axi_wr_data;
     output [WSTRB_WIDTH-1:0] axi_wr_strb;
+    input [1:0] axi_wr_stat;
 
     wire awready_nxt;
     wire awid_match;
@@ -111,6 +111,13 @@ module AXI_WRITE_INFT(
     DFFE  #(.WIDTH(WSTRB_WIDTH)) ff_axi_wr_len   (.clk(clk), .en(WVLID), .d(WSTRB), .q(axi_wr_strb));
 
     // wresp related 
+    wire bvld_nxt;
+    wire[1:0] bresp_nxt;
+    assign bvld_nxt = (BVALID & BREADY) | axi_wr_done; 
     assign BID = `TPU_ID;
+    assign bresp_nxt = axi_wr_stat;
+    DFFR ff_wready (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
+    DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(axi_wr_done), .d(bresp_nxt), .q(BRESP));
+    
 
 endmodule
