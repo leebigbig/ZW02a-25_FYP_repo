@@ -1,0 +1,12 @@
+//axi write related
+`define TPU_ID                      8'b0
+// burst type
+`define AXI_WR_BURST_FIXED          2'b00
+`define AXI_WR_BURST_INCR           2'b01
+`define AXI_WR_BURST_WRAP           2'b10
+// region define
+`define AXI_CMD_FIFO_REGION         4'b0
+`define AXI_WRAM_REGION             4'b1
+`define AXI_IRAM_REGION             4'b10
+// max values
+`define AWBURST_MAX                 3'b010
