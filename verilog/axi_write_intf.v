@@ -84,6 +84,8 @@ module AXI_WRITE_INFT(
     wire [2:0] axi_wr_size_nxt;
     wire [7:0] axi_wr_len;
     wire [7:0] axi_wr_len_nxt;
+    wire [AWID_WIDTH-1:0] axi_wr_id;
+    wire [AWID_WIDTH-1:0] axi_wr_id_nxt;
     //status bit for burst write, pull high after received valid address write
     //pull low after receiving first data write
     wire axi_wr_init; 
@@ -99,29 +101,38 @@ module AXI_WRITE_INFT(
     wire [WDATA_WIDTH-1:0] axi_wr_strb_nxt;
     wire [AWARRD_WIDTH-1:0] axi_wr_addr_nxt;
     wire [AWARRD_WIDTH-1:0] axi_wr_size_one_hot;
+    //write response related
+    wire bvld_nxt;
+    wire [1:0] bresp_nxt;
+    wire axi_wr_finish_status; //last wr is received
+    wire axi_wr_finish_status_nxt; //last wr is received
+    wire axi_wr_finish_status_en; //last wr is received
 
-
-    assign axi_wr_begin = awid_match & AWREADY & AWVALID; //receive awvalid with match awid
-    assign awid_match = ~(|(AWID ^ `TPU_ID));
+    assign axi_wr_begin = AWREADY & AWVALID; //receive awvalid with match awid
     assign awready_nxt = ~axi_wr_begin | axi_wr_done; //when a burst is done transfer, pull up awready
     DFFS ff_awready (.clk(clk), .rst_n(rst_n), .d(awready_nxt), .q(AWREADY));
 
     assign axi_wr_doing_nxt = axi_wr_begin | ~axi_wr_finish;
     assign axi_wr_doing_en = axi_wr_begin | axi_wr_finish;
     assign axi_wr_finish = (~(|axi_wr_cnt) | WLAST) & axi_wr_doing & axi_wr_received; //received last transaction
+    assign axi_wr_finish_status_nxt = axi_wr_finish | axi_wr_finish_status & ~axi_transfer_done;
+    assign axi_wr_finish_status_en = axi_wr_doing_en | axi_transfer_done;
     DFFRE ff_axi_wr_doing(.clk(clk), .rst_n(rst_n), ,en(axi_wr_doing_en), .d(axi_wr_doing_nxt), .q(axi_wr_doing));
+    DFFRE ff_axi_wr_doing(.clk(clk), .rst_n(rst_n), ,en(axi_wr_finish_status_en), .d(axi_wr_finish_status_nxt), .q(axi_wr_finish_status));
 
     assign axi_wr_len_nxt = axi_wr_doing? axi_wr_len: AWLEN;
     assign axi_wr_size_nxt = axi_wr_doing? axi_wr_size: AWSIZE;
     assign axi_wr_region_nxt = axi_wr_doing? axi_wr_region: AWREGION;
     assign axi_wr_init_addr_nxt = axi_wr_doing? axi_wr_init_addr : AWADDR;
     assign axi_wr_burst_nxt = axi_wr_doing? axi_wr_burst : (&AWBURST[1:0] | AWBURST[2]) ? `AWBURST_MAX : AWBURST;
+    assign axi_wr_id_nxt = axi_wr_doing? axi_wr_id : AWID;
 
     DFFE  #(.WIDTH(AWARRD_WIDTH)) ff_axi_wr_addr (.clk(clk), .en(AWVALID), .d(axi_wr_init_addr_nxt), .q(axi_wr_init_addr));
     DFFE  #(.WIDTH(2)) ff_axi_wr_burst (.clk(clk), .en(AWVALID), .d(axi_wr_burst_nxt), .q(axi_wr_burst));
     DFFE  #(.WIDTH(3)) ff_axi_wr_size  (.clk(clk), .en(AWVALID), .d(axi_wr_size_nxt), .q(axi_wr_size));
     DFFE  #(.WIDTH(8)) ff_axi_wr_len   (.clk(clk), .en(AWVALID), .d(axi_wr_len_nxt), .q(axi_wr_len));
     DFFE  #(.WIDTH(2)) ff_axi_wr_region   (.clk(clk), .en(AWVALID), .d(axi_wr_region_nxt), .q(axi_wr_region));
+    DFFE  #(.WIDTH(AWID_WIDTH)) ff_axi_wr_region   (.clk(clk), .en(AWVALID), .d(axi_wr_id_nxt), .q(axi_wr_id));
 
     // wdata related
     assign axi_transfer_done = fifo_wr_done | iram_wr_done | wram_wr_done;
@@ -144,14 +155,13 @@ module AXI_WRITE_INFT(
     DFFE  #(.WIDTH(8))           ff_axi_wr_cnt    (.clk(clk), .en(WVLID), .d(axi_wr_cnt_nxt), .q(axi_wr_cnt));
     DFFE  #(.WIDTH(AWARRD_WIDTH)) ff_axi_wr_addr (.clk(clk), .en(AWVALID), .d(axi_wr_addr_nxt), .q(axi_wr_addr));
 
-    // wresp related 
-    wire bvld_nxt;
-    wire[1:0] bresp_nxt;
-    assign bvld_nxt = (BVALID & BREADY) | axi_wr_done; 
-    assign BID = `TPU_ID;
-    assign bresp_nxt = axi_wr_stat;
+    // wresp related
+    assign axi_wr_done = BVALID & BREADY; 
+    assign bvld_nxt = ~axi_wr_done | axi_wr_finish_status & axi_transfer_done; 
+    assign BID = axi_wr_id;
+    assign bresp_nxt = 2'b0//TODO: axi_wr_stat;
     DFFR ff_wready (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
-    DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(axi_wr_done), .d(bresp_nxt), .q(BRESP));
+    DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(axi_transfer_done), .d(bresp_nxt), .q(BRESP));
     
 
 endmodule
