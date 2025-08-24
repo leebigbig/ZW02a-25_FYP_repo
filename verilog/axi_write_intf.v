@@ -61,14 +61,14 @@ module AXI_WRITE_INFT(
     output BVALID;
     input BREADY;
     //internal interface
-    output axi_wr_vld,
-    output [AWARRD_WIDTH-1:0]axi_wr_addr,
-    output [WDATA_WIDTH-1:0]axi_wr_data,
-    output [WDATA_WIDTH-1:0]axi_wr_strb,
-    output [1:0]axi_wr_region,
-    input fifo_wr_done,
-    input iram_wr_done,
-    input wram_wr_done
+    output axi_wr_vld;
+    output [AWARRD_WIDTH-1:0]axi_wr_addr;
+    output [WDATA_WIDTH-1:0]axi_wr_data;
+    output [WDATA_WIDTH-1:0]axi_wr_strb;
+    output [1:0]axi_wr_region;
+    input fifo_wr_done;
+    input iram_wr_done;
+    input wram_wr_done;
 
     //address write related
     wire awready_nxt;
