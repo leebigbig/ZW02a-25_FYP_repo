@@ -1,5 +1,8 @@
 //axi write related
-`define TPU_ID                      8'b0
+`define AXI_OKAY                    2'b00
+`define AXI_EXOKAY                  2'b01
+`define AXI_SLVERR                  2'b10
+`define AXI_DECERR                  2'b11
 // burst type
 `define AXI_WR_BURST_FIXED          2'b00
 `define AXI_WR_BURST_INCR           2'b01

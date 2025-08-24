@@ -28,6 +28,7 @@ module AXI_WRITE_INFT(
     axi_wr_strb,
     axi_wr_region,
     fifo_wr_done,
+    fifo_err,
     iram_wr_done,
     wram_wr_done
 );
@@ -67,6 +68,7 @@ module AXI_WRITE_INFT(
     output [WDATA_WIDTH-1:0]axi_wr_strb;
     output [1:0]axi_wr_region;
     input fifo_wr_done;
+    input fifo_err;
     input iram_wr_done;
     input wram_wr_done;
 
@@ -104,9 +106,11 @@ module AXI_WRITE_INFT(
     //write response related
     wire bvld_nxt;
     wire [1:0] bresp_nxt;
+    wire bresp_en;
     wire axi_wr_finish_status; //last wr is received
     wire axi_wr_finish_status_nxt; //last wr is received
     wire axi_wr_finish_status_en; //last wr is received
+    wire slverr_allowed;
 
     assign axi_wr_begin = AWREADY & AWVALID; //receive awvalid with match awid
     assign awready_nxt = ~axi_wr_begin | axi_wr_done; //when a burst is done transfer, pull up awready
@@ -159,9 +163,14 @@ module AXI_WRITE_INFT(
     assign axi_wr_done = BVALID & BREADY; 
     assign bvld_nxt = ~axi_wr_done | axi_wr_finish_status & axi_transfer_done; 
     assign BID = axi_wr_id;
-    assign bresp_nxt = 2'b0//TODO: axi_wr_stat;
+    //response logic
+    assign slverr_allowed = ~BRESP[1] & fifo_err & fifo_wr_done;
+    //
+    assign bresp_nxt =  axi_wr_begin & ~axi_wr_doing? 2'b00
+                     : slverr_allowed ? `AXI_SLVERR : BRESP;//TODO: axi_wr_stat;
+    assign bresp_en = axi_transfer_done | axi_wr_begin & ~axi_wr_doing;
     DFFR ff_wready (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
-    DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(axi_transfer_done), .d(bresp_nxt), .q(BRESP));
+    DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(bresp_en), .d(bresp_nxt), .q(BRESP));
     
 
 endmodule
