@@ -166,9 +166,9 @@ module AXI_WRITE_INFT(
     //response logic
     assign slverr_allowed = ~BRESP[1] & fifo_err & fifo_wr_done;
     //
-    assign bresp_nxt =  axi_wr_begin & ~axi_wr_doing? 2'b00
+    assign bresp_nxt =  axi_wr_begin ? 2'b00
                      : slverr_allowed ? `AXI_SLVERR : BRESP;//TODO: axi_wr_stat;
-    assign bresp_en = axi_transfer_done | axi_wr_begin & ~axi_wr_doing;
+    assign bresp_en = axi_transfer_done | axi_wr_begin;
     DFFR ff_wready (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
     DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(bresp_en), .d(bresp_nxt), .q(BRESP));
     
