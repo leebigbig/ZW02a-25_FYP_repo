@@ -1,6 +1,6 @@
-module DFFR(
+module DFFE(
     clk,
-    d,
+    dE,
     en,
     q,
 );

@@ -1,4 +1,4 @@
-module DFFR(
+module DFFSE(
     clk,
     rst_n,
     d,
