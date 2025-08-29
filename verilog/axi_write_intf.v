@@ -1,3 +1,5 @@
+`include "define.vh"
+
 module AXI_WRITE_INFT(
     clk,
     rst_n,
@@ -53,7 +55,8 @@ module AXI_WRITE_INFT(
     input [WDATA_WIDTH-1:0] WDATA;
     input [WSTRB_WIDTH-1:0] WSTRB;
     input WLAST;
-    input WUSER;
+    //FIXME WUSER not define signal 
+    //input WUSER;
     input WVLID;
     output WREADY;
     //write response channel
@@ -121,8 +124,8 @@ module AXI_WRITE_INFT(
     assign axi_wr_finish = (~(|axi_wr_cnt) | WLAST) & axi_wr_doing & axi_wr_received; //received last transaction
     assign axi_wr_finish_status_nxt = axi_wr_finish | axi_wr_finish_status & ~axi_transfer_done;
     assign axi_wr_finish_status_en = axi_wr_doing_en | axi_transfer_done;
-    DFFRE ff_axi_wr_doing(.clk(clk), .rst_n(rst_n), ,en(axi_wr_doing_en), .d(axi_wr_doing_nxt), .q(axi_wr_doing));
-    DFFRE ff_axi_wr_doing(.clk(clk), .rst_n(rst_n), ,en(axi_wr_finish_status_en), .d(axi_wr_finish_status_nxt), .q(axi_wr_finish_status));
+    DFFRE ff_axi_wr_doing(.clk(clk), .rst_n(rst_n), .en(axi_wr_doing_en), .d(axi_wr_doing_nxt), .q(axi_wr_doing));
+    DFFRE ff_axi_wr_doing2(.clk(clk), .rst_n(rst_n), .en(axi_wr_finish_status_en), .d(axi_wr_finish_status_nxt), .q(axi_wr_finish_status));
 
     assign axi_wr_len_nxt = axi_wr_doing? axi_wr_len: AWLEN;
     assign axi_wr_size_nxt = axi_wr_doing? axi_wr_size: AWSIZE;
@@ -136,7 +139,7 @@ module AXI_WRITE_INFT(
     DFFE  #(.WIDTH(3)) ff_axi_wr_size  (.clk(clk), .en(AWVALID), .d(axi_wr_size_nxt), .q(axi_wr_size));
     DFFE  #(.WIDTH(8)) ff_axi_wr_len   (.clk(clk), .en(AWVALID), .d(axi_wr_len_nxt), .q(axi_wr_len));
     DFFE  #(.WIDTH(2)) ff_axi_wr_region   (.clk(clk), .en(AWVALID), .d(axi_wr_region_nxt), .q(axi_wr_region));
-    DFFE  #(.WIDTH(AWID_WIDTH)) ff_axi_wr_region   (.clk(clk), .en(AWVALID), .d(axi_wr_id_nxt), .q(axi_wr_id));
+    DFFE  #(.WIDTH(AWID_WIDTH)) ff_axi_wr_region2   (.clk(clk), .en(AWVALID), .d(axi_wr_id_nxt), .q(axi_wr_id));
 
     // wdata related
     assign axi_transfer_done = fifo_wr_done | iram_wr_done | wram_wr_done;
@@ -146,9 +149,9 @@ module AXI_WRITE_INFT(
     assign axi_wr_init_en = AWVALID | WVLID;
     assign axi_wr_cnt_nxt = axi_wr_init  ? axi_wr_len :
                             (axi_wr_doing & (|axi_wr_cnt) ) ? axi_wr_cnt - 1 : axi_wr_cnt;
-    assign axi_wr_size_one_hot = {AWARRD_WIDTH(axi_wr_size == 3'b000)} & `AWARRD_WIDTH'b001 |
-                                 {AWARRD_WIDTH(axi_wr_size == 3'b001)} & `AWARRD_WIDTH'b010 |
-                                 {AWARRD_WIDTH(axi_wr_size == 3'b010)} & `AWARRD_WIDTH'b100 ;
+    assign axi_wr_size_one_hot = ({AWARRD_WIDTH{axi_wr_size == 3'b000}} & 'b001) |
+                                 ({AWARRD_WIDTH{axi_wr_size == 3'b001}} & 'b010) |
+                                 ({AWARRD_WIDTH{axi_wr_size == 3'b010}} & 'b100) ;
     assign axi_wr_addr_nxt = (axi_wr_init | axi_wr_burst == `AXI_WR_BURST_FIXED) ? axi_wr_init_addr :
                              (axi_wr_burst == `AXI_WR_BURST_INCR) ? axi_wr_addr + axi_wr_size_one_hot : axi_wr_addr;
     DFFS  ff_wready (.clk(clk), .rst_n(rst_n), .d(wready_nxt), .q(WREADY));
@@ -157,7 +160,7 @@ module AXI_WRITE_INFT(
     DFFE  #(.WIDTH(WDATA_WIDTH)) ff_axi_wr_dara   (.clk(clk), .en(WVLID), .d(WDATA), .q(axi_wr_data));
     DFFE  #(.WIDTH(WDATA_WIDTH)) ff_axi_wr_strb   (.clk(clk), .en(WVLID), .d(WSTRB), .q(axi_wr_strb));
     DFFE  #(.WIDTH(8))           ff_axi_wr_cnt    (.clk(clk), .en(WVLID), .d(axi_wr_cnt_nxt), .q(axi_wr_cnt));
-    DFFE  #(.WIDTH(AWARRD_WIDTH)) ff_axi_wr_addr (.clk(clk), .en(AWVALID), .d(axi_wr_addr_nxt), .q(axi_wr_addr));
+    DFFE  #(.WIDTH(AWARRD_WIDTH)) ff_axi_wr_addr2 (.clk(clk), .en(AWVALID), .d(axi_wr_addr_nxt), .q(axi_wr_addr));
 
     // wresp related
     assign axi_wr_done = BVALID & BREADY; 
@@ -169,7 +172,7 @@ module AXI_WRITE_INFT(
     assign bresp_nxt =  axi_wr_begin ? 2'b00
                      : slverr_allowed ? `AXI_SLVERR : BRESP;//TODO: axi_wr_stat;
     assign bresp_en = axi_transfer_done | axi_wr_begin;
-    DFFR ff_wready (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
+    DFFR ff_wready2 (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
     DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(bresp_en), .d(bresp_nxt), .q(BRESP));
     
 
