@@ -16,6 +16,12 @@ module CMD_BUFF(
     ctrl_cmd_buff_rdy
 );
 
+    //parameter
+    parameter AWID_WIDTH = 8;
+    parameter AWARRD_WIDTH = 11;
+    parameter WDATA_WIDTH = 32;
+    parameter WSTRB_WIDTH = 4; // should be WDATA_WIDTH/4
+    
     input clk;
     input rst_n; 
     //axi input
@@ -73,8 +79,8 @@ module CMD_BUFF(
         .pick_rdy(ctrl_cmd_buff_rdy)
     );
 
-    assign fifo_err_nxt = ~(&WSTRB);
-    assign fifo_wr_done_nxt = in0_data_qual | axi_wr_vld & (axi_wr_region == `AXI_CMD_FIFO_REGION) & ~(&WSTRB);
+    assign fifo_err_nxt = ~(&axi_wr_strb);
+    assign fifo_wr_done_nxt = in0_data_qual | axi_wr_vld & (axi_wr_region == `AXI_CMD_FIFO_REGION) & ~(&axi_wr_strb);
 
     DFFR ff_fifo_wr_done (.clk(clk), .rst_n(rst_n), .d(fifo_wr_done_nxt), .q(fifo_wr_done));
     DFFE ff_fifo_wr_err (.clk(clk), .rst_n(rst_n), .en(axi_wr_vld), .d(fifo_err_nxt), .q(fifo_err));
