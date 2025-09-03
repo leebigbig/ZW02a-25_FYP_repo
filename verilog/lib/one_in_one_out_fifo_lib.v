@@ -55,7 +55,7 @@ module one_in_one_out_fifo_lib(
     assign pick_ptr_oh_nxt = {pick_ptr_oh[ENT_NUM-2:0], pick_ptr_oh[ENT_NUM-1]}; //rr pick
     assign pick_ptr_nxt = pick_ptr + 'b1 ;
     DFFRE #(.WIDTH(ENT_NUM-1)) ff_pick_ptr_oh_hi (.clk(clk), .rst_n(rst_n), .en(pick_ptr_oh_update_en),.d(pick_ptr_oh_nxt[ENT_NUM-1:1]), .q(pick_ptr_oh[ENT_NUM-1:1]));
-    DFFSE ff_alloc_ptr_oh_lo (.clk(clk), .rst_n(rst_n), .en(pick_ptr_oh_update_en), .d(pick_ptr_oh_nxt[0]), .q(pick_ptr_oh[0]));
+    DFFSE ff_alloc_ptr_oh_lo_pick (.clk(clk), .rst_n(rst_n), .en(pick_ptr_oh_update_en), .d(pick_ptr_oh_nxt[0]), .q(pick_ptr_oh[0]));
     //vld logic
     assign ent_update = in_vld | ent_out;
     assign ent_vld_nxt = alloc_ptr_oh_qual | ent_vld & ~(pick_ptr_oh & {ENT_NUM{pick_rdy}});
