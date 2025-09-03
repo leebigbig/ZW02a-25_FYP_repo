@@ -1,3 +1,4 @@
+`include "define.vh"
 module CMD_BUFF(
     clk,
     rst_n,

@@ -158,7 +158,7 @@ module AXI_WRITE_INFT(
     genvar i;
     generate
         for (i = 0;i<WDATA_WIDTH;i=i+1) begin
-            assign axi_wr_strb_nxt[7+i*8:0+i*8] = axi_wr_received ? {8{WSTRB}} | axi_wr_strb[7+i*8:0+i*8];
+            assign axi_wr_strb_nxt[7+i*8:0+i*8] = axi_wr_received ? {8{WSTRB}} : axi_wr_strb[7+i*8:0+i*8];
         end
     endgenerate
     assign axi_wr_data_nxt = axi_wr_received ? WDATA : axi_wr_data;
