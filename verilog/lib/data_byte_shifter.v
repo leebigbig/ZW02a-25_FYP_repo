@@ -1,4 +1,4 @@
-module 128bit_byte_shifter(
+module data_byte_shifter(
     in,
     offset,
     out

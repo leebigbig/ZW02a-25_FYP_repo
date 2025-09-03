@@ -123,8 +123,8 @@ module ram_buffer_ent(
         end
     endgenerate
 
-    128bit_byte_shifter pos_shifter(.in(ent_data_pre), .offset(buff_start_byte), .out(ent_data_shifted_pos));
-    128bit_byte_shifter neg_shifter(.in(ent_data_pre), .offset(buff_start_byte), .out(ent_data_shifted_neg));
+    data_byte_shifter pos_shifter(.in(ent_data_pre), .offset(buff_start_byte), .out(ent_data_shifted_pos));
+    data_byte_shifter neg_shifter(.in(ent_data_pre), .offset(buff_start_byte), .out(ent_data_shifted_neg));
     //
     
     //output data mux
