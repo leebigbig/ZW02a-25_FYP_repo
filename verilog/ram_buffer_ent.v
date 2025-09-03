@@ -15,7 +15,7 @@ module ram_buffer_ent(
     ent_vld,
     ent_data,
     ent_addr,
-    ent_cur,
+    ent_age,
     ent_free,
     ent_vld_1_in_16
 );
@@ -38,7 +38,7 @@ module ram_buffer_ent(
     output [127:0] ent_data;
     output [7:0] ent_addr;
     output ent_age;
-    output ent_free
+    output ent_free;
     output [15:0] ent_vld_1_in_16;
 
     wire ent_vld_nxt;
@@ -69,8 +69,7 @@ module ram_buffer_ent(
     assign ent_free = ~(ent_cnt);
 
     assign ent_cur_upd_en = alloc_en | ram_update;
-    assign ent_cur_nxt = alloc_en ? 1'b1 :
-                         ram_update_en : 1'b0;
+    assign ent_cur_nxt = alloc_en ? 1'b1 : 1'b0;
 
     //ent vld logic
     assign ent_vld_nxt = alloc_en | ent_vld & ~(ent_cur_byte == buff_end_byte); //read out all required byte, invld ent
@@ -118,7 +117,7 @@ module ram_buffer_ent(
     //ent data shifting
     genvar i;
     generate
-        for (i = 0;i < 16;i++) begin
+        for (i = 0;i < 16;i=i+1) begin
             assign ent_data_invert[7+i*8:i*8] = ent_data_pre[127-i*8:120-i*8];
         end
     endgenerate
@@ -130,7 +129,7 @@ module ram_buffer_ent(
     //output data mux
     genvar i;
     generate
-        for (i = 0;i < 16;i++) begin
+        for (i = 0;i < 16;i=i+1) begin
             assign ent_data_msk[7+i*8:0+i*8] = {8{ent_vld_1_in_16[i]}};
         end
     endgenerate

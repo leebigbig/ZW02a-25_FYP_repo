@@ -220,7 +220,7 @@ module ram_buffer(
 
     genvar i;
     generate
-        for (i = 0; i < ENT_NUM ; i++) begin
+        for (i = 0; i < ENT_NUM ; i=i+1) begin
             ram_buffer_ent ram_buffer_ent(
                 .clk(clk),
                 .rst_n(rst_n),
@@ -240,7 +240,7 @@ module ram_buffer(
                 .ent_addr(ent_addr[i]),
                 .ent_cur(ent_cur[i]),
                 .ent_free(ent_free[i]),
-                .ent_vld_1_in_16(ent_vld_1_in_16[i]);
+                .ent_vld_1_in_16(ent_vld_1_in_16[i])
             );
         end
     endgenerate 

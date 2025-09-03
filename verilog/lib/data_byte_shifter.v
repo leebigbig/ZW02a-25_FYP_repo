@@ -11,7 +11,7 @@ module data_byte_shifter(
 
     genvar i;
     generate
-        for (i = 1;i < 16;i++) begin
+        for (i = 1;i < 16;i=i+1) begin
             assign shiftted_data[i] = {in[7+i*8:0], in[127:8+i*8]};
         end
     endgenerate
