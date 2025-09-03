@@ -18,4 +18,4 @@ commit_text = inquirer.text("commit_text")
 commit_message = f'[{commit_type}][{update_module}] {commit_text}'
 
 subprocess.run(["git",'commit','-m', commit_message])
-print(commit_message)
+#print(commit_message)
