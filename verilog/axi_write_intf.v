@@ -47,7 +47,7 @@ module AXI_WRITE_INFT(
     input [AWARRD_WIDTH-1:0] AWADDR;
     input [7:0] AWLEN;
     input [2:0] AWSIZE;
-    input [1:0] AWBURST;
+    input [2:0] AWBURST;
     input [3:0] AWREGION;
     input  AWVALID;
     output AWREADY;
@@ -77,7 +77,6 @@ module AXI_WRITE_INFT(
 
     //address write related
     wire awready_nxt;
-    wire awid_match;
     wire axi_wr_done;
     wire axi_wr_begin;
     wire axi_wr_finish;
@@ -175,5 +174,6 @@ module AXI_WRITE_INFT(
     DFFR ff_wready2 (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
     DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(bresp_en), .d(bresp_nxt), .q(BRESP));
     
+    wire unused_awregion = AWREGION[3:2];
 
 endmodule

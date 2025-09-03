@@ -2,7 +2,7 @@ module DFFS(
     clk,
     rst_n,
     d,
-    q,
+    q
 );
 
 parameter WIDTH = 1;

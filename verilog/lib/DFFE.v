@@ -1,8 +1,8 @@
 module DFFE(
     clk,
-    dE,
+    d,
     en,
-    q,
+    q
 );
 
 parameter WIDTH = 1;
@@ -12,7 +12,7 @@ input wire en;
 input wire [WIDTH-1:0]d;
 output reg [WIDTH-1:0]q;
 
-always@(posedge clk or negedge rst_n)begin
+always@(posedge clk)begin
     if(en) begin
         q <= d;
     end
