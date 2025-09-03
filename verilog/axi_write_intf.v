@@ -47,7 +47,7 @@ module AXI_WRITE_INFT(
     input [AWARRD_WIDTH-1:0] AWADDR;
     input [7:0] AWLEN;
     input [2:0] AWSIZE;
-    input [2:0] AWBURST;
+    input [1:0] AWBURST;
     input [3:0] AWREGION;
     input  AWVALID;
     output AWREADY;
@@ -77,6 +77,7 @@ module AXI_WRITE_INFT(
 
     //address write related
     wire awready_nxt;
+    wire awid_match;
     wire axi_wr_done;
     wire axi_wr_begin;
     wire axi_wr_finish;
@@ -103,6 +104,7 @@ module AXI_WRITE_INFT(
     wire [7:0] axi_wr_cnt; //counter for write transfer in this burst
     wire [7:0] axi_wr_cnt_nxt;
     wire [WDATA_WIDTH-1:0] axi_wr_strb_nxt;
+    wire [WDATA_WIDTH-1:0] axi_wr_data_nxt;
     wire [AWARRD_WIDTH-1:0] axi_wr_addr_nxt;
     wire [AWARRD_WIDTH-1:0] axi_wr_size_one_hot;
     //write response related
@@ -153,11 +155,18 @@ module AXI_WRITE_INFT(
                                  ({AWARRD_WIDTH{axi_wr_size == 3'b010}} & 'b100) ;
     assign axi_wr_addr_nxt = (axi_wr_init | axi_wr_burst == `AXI_WR_BURST_FIXED) ? axi_wr_init_addr :
                              (axi_wr_burst == `AXI_WR_BURST_INCR) ? axi_wr_addr + axi_wr_size_one_hot : axi_wr_addr;
+    genvar i;
+    generate
+        for (i = 0;i<WDATA_WIDTH;i=i+1) begin
+            assign axi_wr_strb_nxt[7+i*8:0+i*8] = axi_wr_received ? {8{WSTRB}} | axi_wr_strb[7+i*8:0+i*8];
+        end
+    endgenerate
+    assign axi_wr_data_nxt = axi_wr_received ? WDATA : axi_wr_data;
     DFFS  ff_wready (.clk(clk), .rst_n(rst_n), .d(wready_nxt), .q(WREADY));
     DFFR  ff_wrvld (.clk(clk), .rst_n(rst_n), .d(axi_wr_received), .q(axi_wr_vld));
     DFFE  ff_axi_wr_init   (.clk(clk), .en(axi_wr_init_en), .d(axi_wr_init_nxt), .q(axi_wr_init));
-    DFFE  #(.WIDTH(WDATA_WIDTH)) ff_axi_wr_dara   (.clk(clk), .en(WVLID), .d(WDATA), .q(axi_wr_data));
-    DFFE  #(.WIDTH(WDATA_WIDTH)) ff_axi_wr_strb   (.clk(clk), .en(WVLID), .d(WSTRB), .q(axi_wr_strb));
+    DFFE  #(.WIDTH(WDATA_WIDTH)) ff_axi_wr_dara   (.clk(clk), .en(WVLID), .d(axi_wr_data_nxt), .q(axi_wr_data));
+    DFFE  #(.WIDTH(WDATA_WIDTH)) ff_axi_wr_strb   (.clk(clk), .en(WVLID), .d(axi_wr_strb_nxt), .q(axi_wr_strb));
     DFFE  #(.WIDTH(8))           ff_axi_wr_cnt    (.clk(clk), .en(WVLID), .d(axi_wr_cnt_nxt), .q(axi_wr_cnt));
     DFFE  #(.WIDTH(AWARRD_WIDTH)) ff_axi_wr_addr2 (.clk(clk), .en(AWVALID), .d(axi_wr_addr_nxt), .q(axi_wr_addr));
 
@@ -174,6 +183,5 @@ module AXI_WRITE_INFT(
     DFFR ff_wready2 (.clk(clk), .rst_n(rst_n), .d(bvld_nxt), .q(BVALID));
     DFFE #(.WIDTH(2)) ff_bresp (.clk(clk), .en(bresp_en), .d(bresp_nxt), .q(BRESP));
     
-    wire unused_awregion = AWREGION[3:2];
 
 endmodule
