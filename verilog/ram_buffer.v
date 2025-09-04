@@ -203,6 +203,7 @@ module ram_buffer(
 
     //ram buff fsm
     assign ram_buff_done_recv = (ram_buff_ent_cnt == ctrl_ram_buff_ent_num_ff) & ram_buff_alloc_vld;
+    assign ram_buff_done_send = (ram_buff_stat_fsm == `RAM_BUFF_FSM_SND) & ~(|ent_vld);
     assign ram_buff_stat_fsm_en = ctrl_ram_buff_vld | ram_buff_alloc_vld | (|ent_vld);
     assign ram_buff_stat_fsm_nxt = ctrl_ram_buff_vld ? `RAM_BUFF_FSM_RECV
                                  : ram_buff_done_recv ? `RAM_BUFF_FSM_SND
