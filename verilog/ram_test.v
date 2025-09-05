@@ -21,7 +21,7 @@ module ram_test ();
 
     //for write
     reg[31:0] wdata;
-    reg[3:0]  wstrb;
+    reg[8:0]  wstrb;
     reg wlast;
     reg wvalid;
     reg wlast;
@@ -39,12 +39,19 @@ module ram_test ();
     wire[1:0]  axi_wr_region;
     
     //bram
-    wire ram_ena;
-    wire[10:0] ram_addr;
+    reg[10:0] ram_addr;
+    reg ram_ena;
     reg [15:0] ram_wea;
-    wire[31:0] ram_in;
+    reg[31:0] ram_in;
     wire[31:0] ram_out;
-    wire ram_rsta;
+    wire awready_nxt;
+    wire axi_wr_done;
+    wire axi_wr_begin;
+    wire bvld_nxt;
+    wire axi_wr_finish_status;
+    wire axi_transfer_done;
+    wire axi_wr_finish_status_nxt;
+    
     
     AXI_WRITE_INFT ram_connect1( 
         .clk(clk),
@@ -78,12 +85,19 @@ module ram_test ();
         .fifo_wr_done(fifo_wr_done),
         .fifo_err(fifo_err),
         .iram_wr_done(iram_wr_done),
-        .wram_wr_done(wram_wr_done)                                                       
+        .wram_wr_done(wram_wr_done),
+        .axi_wr_done(axi_wr_done),
+        .axi_wr_begin(axi_wr_begin),
+        .awready_nxt(awready_nxt),
+        .bvld_nxt(bvld_nxt),
+        .axi_wr_finish_status(axi_wr_finish),
+        .axi_transfer_done(axi_transfer_done),
+        .axi_wr_finish_status_nxt(axi_wr_finish_status_nxt) 
+                                                          
     );
     
-    assign ram_ena = 1'b1;
-    assign ram_addr = 'b0;
-    assign ram_in = axi_wr_data;
+    //assign ram_addr = 'b0;
+    //assign ram_in = axi_wr_data;
     
     //Let this is update for wram
     blk_mem_gen_0 readinit1 (.clka (clk),
@@ -91,24 +105,23 @@ module ram_test ();
 			                 .wea  (ram_wea),
 			                 .addra(ram_addr),
 			                 .dina (ram_in),
-			                 .douta(ram_out),
-			                 .rsta_busy(ram_rstb));
+			                 //.dina (0),
+			                 .douta(ram_out));
     
     
     
     always #5 clk = ~clk;
+    always #10 ram_ena = ~ram_ena;
     initial begin
-        clk=1'b0;
-        rst_n = 1'b1;
-        #5;
+        clk=1'b1;
         rst_n = 1'b0;
         #20;
         rst_n = 1'b1;
         //address related input
         awid = 'b1;
         awaddr = 'b0;
-        awlen = 8'b10000;
-        awsize = 3'b100;
+        awlen = 8'b0011;
+        awsize = 3'b010;
         awregion = 4'b0001;
         awvalid = 1'b1;
         // WRAP
@@ -118,17 +131,35 @@ module ram_test ();
         bready = 1'b1;
 
         //write related input
-        wdata = 'd404;
-        wstrb = {8{1'b1}};
+        wdata = 'd10;
+        wstrb = {4{1'b1}};
         wlast = 1'b1;
         wvalid = 1'b1;
+        ram_wea = {16{1'b0}};
+        ram_ena = 1'b0;
+        #20;
         ram_wea = {16{1'b1}};
+        ram_in = axi_wr_data;
+        ram_addr = axi_wr_addr;
+        #10;
+        ram_wea = 'b0;
+        #10;
+        ram_wea = {16{1'b1}};
+        ram_in = axi_wr_data;
+        ram_addr = axi_wr_addr;
+        #10;
+        ram_wea = 'b0;
+        #50;
+        ram_addr='d4;
+        
         
     end
-    always #60 awaddr=awaddr+ 'd4;
-    always #60 wdata = wdata + 'd1;
-    always #120 awid = awid + 'd1;
-    always #160 ram_wea = 'b0; 
+    always #10 awaddr=awaddr+ 'd4;  
+    always #10 wdata = wdata + 'd1;
+    always #10 ram_addr = ram_addr + 'd4;
+    
+    always #20 awid = awid + 'd1;
+    always #80 ram_wea = 'b0; 
     
    
 
