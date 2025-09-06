@@ -44,6 +44,9 @@ module ram_test ();
     reg [15:0] ram_wea;
     reg[31:0] ram_in;
     wire[31:0] ram_out;
+    reg ram_wea_nxt;
+    
+    //debug signal
     wire awready_nxt;
     wire axi_wr_done;
     wire axi_wr_begin;
@@ -51,6 +54,13 @@ module ram_test ();
     wire axi_wr_finish_status;
     wire axi_transfer_done;
     wire axi_wr_finish_status_nxt;
+    wire axi_wr_doing;
+    wire axi_wr_received;
+    wire wready_nxt;
+    wire axi_wr_doing_nxt;
+    wire axi_wr_doing_en;
+    wire axi_wr_finish;
+    
     
     
     AXI_WRITE_INFT ram_connect1( 
@@ -86,13 +96,21 @@ module ram_test ();
         .fifo_err(fifo_err),
         .iram_wr_done(iram_wr_done),
         .wram_wr_done(wram_wr_done),
+        
+        //debug signal
         .axi_wr_done(axi_wr_done),
         .axi_wr_begin(axi_wr_begin),
         .awready_nxt(awready_nxt),
         .bvld_nxt(bvld_nxt),
-        .axi_wr_finish_status(axi_wr_finish),
+        .axi_wr_finish_status(axi_wr_finish_status),
         .axi_transfer_done(axi_transfer_done),
-        .axi_wr_finish_status_nxt(axi_wr_finish_status_nxt) 
+        .axi_wr_finish_status_nxt(axi_wr_finish_status_nxt),
+        .axi_wr_doing(axi_wr_doing),
+        .axi_wr_received(axi_wr_received),
+        .wready_nxt(wready_nxt),
+        .axi_wr_doing_nxt (axi_wr_doing_nxt),
+        .axi_wr_doing_en (axi_wr_doing_en),
+        .axi_wr_finish(axi_wr_finish)
                                                           
     );
     
@@ -110,11 +128,16 @@ module ram_test ();
     
     
     
+    
     always #5 clk = ~clk;
     always #10 ram_ena = ~ram_ena;
     initial begin
         clk=1'b1;
         rst_n = 1'b0;
+        fifo_wr_done = 1'b0;
+        iram_wr_done = 1'b0;
+        wram_wr_done = 1'b0;
+        
         #20;
         rst_n = 1'b1;
         //address related input
@@ -126,6 +149,7 @@ module ram_test ();
         awvalid = 1'b1;
         // WRAP
         awburst = 2'b10;
+        
 
         //burst related input
         bready = 1'b1;
@@ -147,8 +171,12 @@ module ram_test ();
         ram_wea = {16{1'b1}};
         ram_in = axi_wr_data;
         ram_addr = axi_wr_addr;
+        //iram_wr_done = 1'b1;
+        
         #10;
         ram_wea = 'b0;
+        //iram_wr_done = 1'b0;
+        
         #50;
         ram_addr='d4;
         
@@ -161,6 +189,16 @@ module ram_test ();
     always #20 awid = awid + 'd1;
     always #80 ram_wea = 'b0; 
     
+    always #5 begin
+        if(ram_wea == {16{1'b1}})begin
+            #5;
+            iram_wr_done = 1'b1;
+         end
+         else begin
+            #5;
+            iram_wr_done = 1'b0;
+         end
+    end
    
 
     
